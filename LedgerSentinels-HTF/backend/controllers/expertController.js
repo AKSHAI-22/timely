@@ -30,6 +30,7 @@ const createExpertProfile = async (req, res) => {
     const expertProfile = new ExpertProfile({
       address: req.user.address,
       name: req.user.name,
+      email: req.user.email,
       profession,
       description,
       skills: skills || [],
@@ -375,6 +376,82 @@ const getExpertStats = async (req, res) => {
   }
 };
 
+// Get all expert profiles (public)
+const getExpertProfiles = async (req, res) => {
+  try {
+    const { profession, minRating, maxPrice, location } = req.query;
+    
+    let query = { isActive: true, isVerified: true };
+    
+    if (profession) {
+      query.profession = new RegExp(profession, 'i');
+    }
+    
+    if (minRating) {
+      query.rating = { $gte: parseFloat(minRating) };
+    }
+    
+    if (maxPrice) {
+      query.hourlyRate = { $lte: parseFloat(maxPrice) };
+    }
+    
+    if (location) {
+      query['location.city'] = new RegExp(location, 'i');
+    }
+
+    const experts = await ExpertProfile.find(query)
+      .select('-__v')
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      success: true,
+      data: experts
+    });
+  } catch (error) {
+    console.error('Error fetching expert profiles:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch expert profiles',
+      error: error.message
+    });
+  }
+};
+
+// Delete expert profile
+const deleteExpertProfile = async (req, res) => {
+  try {
+    const expertAddress = req.user.address;
+
+    const expertProfile = await ExpertProfile.findOne({ address: expertAddress });
+    if (!expertProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Expert profile not found'
+      });
+    }
+
+    // Soft delete - mark as inactive
+    expertProfile.isActive = false;
+    await expertProfile.save();
+
+    // Update user to not be expert
+    await User.findByIdAndUpdate(req.userId, { isExpert: false });
+
+    res.json({
+      success: true,
+      message: 'Expert profile deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting expert profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete expert profile',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createExpertProfile,
   getExpertProfile,
@@ -383,5 +460,7 @@ module.exports = {
   getExpertById,
   uploadDocuments,
   updateAvailability,
-  getExpertStats
+  getExpertStats,
+  getExpertProfiles,
+  deleteExpertProfile
 };

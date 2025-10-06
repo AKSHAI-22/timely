@@ -1,13 +1,13 @@
 import { ethers } from 'ethers';
 
-// Contract addresses for Sepolia
+// Contract addresses for localhost (Hardhat)
 export const CONTRACT_ADDRESSES = {
-    TimeSlotNFT: '0x3453531C06C5A50d2383b5D207Fb1D229e973f89',
-    TimeSlotMarketplace: '0x138149f8575DfD74744e3353CCDe8cAf0f118A25',
-    TimeSlotEscrow: '0x16152DbCca73dB0aD2059363cF207E9B3aa36082',
-    ReviewSystem: '0x1Fc20E148F68cC820C9E28f8Db98415B1FC4cf7d',
-    UserRegistry: '0x9fb5dF44705d9096e18725fFB327cF36a99E964d',
-    TimeSlotFactory: '0x0000000000000000000000000000000000000000', // Not deployed yet
+    TimeSlotNFT: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
+    TimeSlotMarketplace: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+    TimeSlotEscrow: '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+    ReviewSystem: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
+    UserRegistry: '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9',
+    TimeSlotFactory: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
 };
 
 // Basic contract interfaces (simplified for frontend)

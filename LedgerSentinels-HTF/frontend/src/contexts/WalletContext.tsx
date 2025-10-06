@@ -9,7 +9,7 @@ interface WalletContextType {
     disconnectWallet: () => void;
     isConnected: boolean;
     chainId: number | null;
-    switchToSepolia: () => Promise<void>;
+    switchToLocalhost: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -80,7 +80,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         setChainId(null);
     };
 
-    const switchToSepolia = async () => {
+    const switchToLocalhost = async () => {
         try {
             if (!window.ethereum) {
                 throw new Error('MetaMask is not installed');
@@ -88,7 +88,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0xaa36a7' }], // Sepolia chain ID
+                params: [{ chainId: '0x7a69' }], // Localhost chain ID (31337 in hex)
             });
         } catch (error: any) {
             if (error.code === 4902) {
@@ -97,15 +97,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                     method: 'wallet_addEthereumChain',
                     params: [
                         {
-                            chainId: '0xaa36a7',
-                            chainName: 'Sepolia',
-                            rpcUrls: ['https://sepolia.infura.io/v3/'],
+                            chainId: '0x7a69',
+                            chainName: 'Hardhat Local',
+                            rpcUrls: ['http://localhost:8545'],
                             nativeCurrency: {
-                                name: 'Sepolia Ether',
+                                name: 'Ether',
                                 symbol: 'ETH',
                                 decimals: 18,
                             },
-                            blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+                            blockExplorerUrls: [],
                         },
                     ],
                 });
@@ -134,7 +134,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         disconnectWallet,
         isConnected,
         chainId,
-        switchToSepolia,
+        switchToLocalhost,
     };
 
     return (

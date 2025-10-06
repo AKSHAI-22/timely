@@ -5,7 +5,7 @@ const User = require('../models/User');
 const generateToken = (userId, role) => {
   return jwt.sign(
     { userId, role },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-hackathon-2024',
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };
@@ -14,7 +14,7 @@ const generateToken = (userId, role) => {
 const generateRefreshToken = (userId) => {
   return jwt.sign(
     { userId, type: 'refresh' },
-    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+    process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-hackathon-2024',
     { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
   );
 };
@@ -22,7 +22,7 @@ const generateRefreshToken = (userId) => {
 // Verify JWT token
 const verifyToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-hackathon-2024');
   } catch (error) {
     throw new Error('Invalid token');
   }

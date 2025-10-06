@@ -74,7 +74,7 @@ const Home: React.FC = () => {
         },
     ];
 
-    const isSepolia = chainId === 11155111;
+    const isLocalhost = chainId === 31337;
 
     return (
         <Box>
@@ -227,7 +227,7 @@ const Home: React.FC = () => {
                 <Container maxWidth="lg">
                     <Grid container spacing={4} justifyContent="center">
                         {stats.map((stat, index) => (
-                            <Grid size={{ xs: 6, sm: 3 }} key={index}>
+                            <Grid item xs={6} sm={3} key={index}>
                                 <Box
                                     sx={{
                                         textAlign: 'center',
@@ -289,7 +289,7 @@ const Home: React.FC = () => {
 
                     <Grid container spacing={4}>
                         {features.map((feature, index) => (
-                            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
+                            <Grid item xs={12} md={6} lg={4} key={index}>
                                 <Fade in timeout={1000 + index * 200}>
                                     <Card
                                         sx={{

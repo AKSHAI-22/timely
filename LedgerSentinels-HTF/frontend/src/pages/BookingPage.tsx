@@ -96,7 +96,7 @@ const BookingPage: React.FC = () => {
                         </Box>
 
                         <Grid container spacing={3}>
-                            <Grid size={{ xs: 12, md: 6 }}>
+                            <Grid item xs={12} md={6}>
                                 <Box sx={{ mb: 3 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                         <ScheduleIcon sx={{ mr: 2, color: 'primary.main' }} />
@@ -136,7 +136,7 @@ const BookingPage: React.FC = () => {
                                 </Box>
                             </Grid>
 
-                            <Grid size={{ xs: 12, md: 6 }}>
+                            <Grid item xs={12} md={6}>
                                 <Box sx={{ mb: 3 }}>
                                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                                         Description
@@ -184,7 +184,7 @@ const BookingPage: React.FC = () => {
                     </Typography>
 
                     <Grid container spacing={3}>
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid item xs={12} md={4}>
                             <Box sx={{ textAlign: 'center', p: 3 }}>
                                 <CheckCircleIcon sx={{ fontSize: 40, color: 'success.main', mb: 2 }} />
                                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
@@ -196,7 +196,7 @@ const BookingPage: React.FC = () => {
                             </Box>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid item xs={12} md={4}>
                             <Box sx={{ textAlign: 'center', p: 3 }}>
                                 <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
                                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
@@ -208,7 +208,7 @@ const BookingPage: React.FC = () => {
                             </Box>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid item xs={12} md={4}>
                             <Box sx={{ textAlign: 'center', p: 3 }}>
                                 <CheckCircleIcon sx={{ fontSize: 40, color: 'warning.main', mb: 2 }} />
                                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>

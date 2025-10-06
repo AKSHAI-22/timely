@@ -181,7 +181,7 @@ const CustomerDashboard: React.FC = () => {
 
                 {/* Stats */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
@@ -193,7 +193,7 @@ const CustomerDashboard: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <CheckCircleIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
@@ -205,7 +205,7 @@ const CustomerDashboard: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <CheckCircleIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
@@ -217,7 +217,7 @@ const CustomerDashboard: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <MoneyIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
@@ -293,7 +293,7 @@ const CustomerDashboard: React.FC = () => {
                                 const isCompleted = new Date(Number(slot.startTime) * 1000) <= new Date();
 
                                 return (
-                                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={slot.tokenId.toString()}>
+                                    <Grid item xs={12} md={6} lg={4} key={slot.tokenId.toString()}>
                                         <Card
                                             sx={{
                                                 height: '100%',

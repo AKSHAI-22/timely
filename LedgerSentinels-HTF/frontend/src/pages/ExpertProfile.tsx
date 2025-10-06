@@ -137,7 +137,7 @@ const ExpertProfile: React.FC = () => {
 
                 {/* Stats Cards */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <StarIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
@@ -149,7 +149,7 @@ const ExpertProfile: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <PeopleIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
@@ -161,7 +161,7 @@ const ExpertProfile: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
@@ -173,7 +173,7 @@ const ExpertProfile: React.FC = () => {
                         </Card>
                     </Grid>
 
-                    <Grid size={{ xs: 6, md: 3 }}>
+                    <Grid item xs={6} md={3}>
                         <Card sx={{ p: 3, textAlign: 'center' }}>
                             <MoneyIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
@@ -201,7 +201,7 @@ const ExpertProfile: React.FC = () => {
                     ) : (
                         <Grid container spacing={3}>
                             {reviews.map((review) => (
-                                <Grid size={{ xs: 12, md: 6 }} key={review.id}>
+                                <Grid item xs={12} md={6} key={review.id}>
                                     <Card variant="outlined" sx={{ p: 3, height: '100%' }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                                             <Box>

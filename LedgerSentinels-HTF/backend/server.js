@@ -30,10 +30,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/timely', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/timely');
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -49,6 +46,8 @@ const server = new ApolloServer({
     req, 
     contractService 
   }),
+  introspection: true,
+  playground: true,
 });
 
 async function startServer() {
@@ -63,12 +62,18 @@ async function startServer() {
   
   await server.start();
   server.applyMiddleware({ app, path: '/graphql' });
+  
+  // Add error handling middleware after GraphQL
+  app.use(notFound);
+  app.use(errorHandler);
+  
+  console.log('✅ Apollo Server started');
 }
-
-startServer();
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const timeSlotRoutes = require('./routes/timeSlots');
+const expertRoutes = require('./routes/expert');
 
 // Routes
 app.get('/', (req, res) => {
@@ -79,19 +84,37 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true,
+    message: 'LedgerSentinels API Server',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/time-slots', timeSlotRoutes);
+app.use('/api/expert', expertRoutes);
 
-// Error handling middleware (must be last)
-app.use(notFound);
-app.use(errorHandler);
+// Error handling middleware (must be last, but after GraphQL)
+// Note: GraphQL middleware is added in startServer()
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-  console.log(`📁 Uploads: http://localhost:${PORT}/uploads`);
+// Start server after Apollo is ready
+startServer().then(() => {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
+    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+    console.log(`📁 Uploads: http://localhost:${PORT}/uploads`);
+  });
+}).catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });
 
 module.exports = app;

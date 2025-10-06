@@ -93,19 +93,10 @@ const register = async (req, res) => {
     await user.save();
 
     // Generate tokens
-    const token = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const token = generateToken(user._id, user.userType);
+    const refreshToken = generateRefreshToken(user._id);
 
-    // Create expert profile if user is an expert
-    if (userType === 'expert') {
-      const expertProfile = new ExpertProfile({
-        user: user._id,
-        address: user.address,
-        profession: 'Consultant', // Default profession
-        isActive: true
-      });
-      await expertProfile.save();
-    }
+    // Note: Expert profiles are created separately via /api/expert/profile endpoint
 
     res.status(201).json({
       success: true,
@@ -192,8 +183,8 @@ const login = async (req, res) => {
     await user.updateLastLogin();
 
     // Generate tokens
-    const token = generateToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const token = generateToken(user._id, user.userType);
+    const refreshToken = generateRefreshToken(user._id);
 
     res.json({
       success: true,
@@ -238,8 +229,8 @@ const refreshToken = async (req, res) => {
     }
 
     // Generate new tokens
-    const newToken = generateToken(user);
-    const newRefreshToken = generateRefreshToken(user);
+    const newToken = generateToken(user._id, user.userType);
+    const newRefreshToken = generateRefreshToken(user._id);
 
     res.json({
       success: true,

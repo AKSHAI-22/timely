@@ -215,7 +215,7 @@ const Marketplace: React.FC = () => {
                     </Box>
 
                     <Grid container spacing={3} alignItems="center">
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
                                 label="Search"
@@ -230,7 +230,7 @@ const Marketplace: React.FC = () => {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
                             <FormControl fullWidth>
                                 <InputLabel>Profession</InputLabel>
                                 <Select
@@ -251,7 +251,7 @@ const Marketplace: React.FC = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
                                 label="Min Price (ETH)"
@@ -266,7 +266,7 @@ const Marketplace: React.FC = () => {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 fullWidth
                                 label="Max Price (ETH)"
@@ -315,7 +315,7 @@ const Marketplace: React.FC = () => {
                                 const statusText = getSlotStatusText(status);
 
                                 return (
-                                    <Grid size={{ xs: 12, md: 6, lg: 4 }} key={slot.tokenId.toString()}>
+                                    <Grid item xs={12} md={6} lg={4} key={slot.tokenId.toString()}>
                                         <Card
                                             sx={{
                                                 height: '100%',

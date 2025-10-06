@@ -133,9 +133,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes for better performance
-userSchema.index({ email: 1 });
-userSchema.index({ address: 1 });
+// Indexes for better performance (removed duplicate indexes)
 userSchema.index({ userType: 1 });
 userSchema.index({ isActive: 1 });
 

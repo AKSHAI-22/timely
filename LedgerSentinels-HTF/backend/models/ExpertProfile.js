@@ -233,7 +233,7 @@ const expertProfileSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes for better performance
+// Indexes for better performance (removed duplicate indexes)
 expertProfileSchema.index({ profession: 1 });
 expertProfileSchema.index({ rating: -1 });
 expertProfileSchema.index({ hourlyRate: 1 });

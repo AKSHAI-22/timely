@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
         navigate('/');
     };
 
-    const isSepolia = chainId === 11155111;
+    const isLocalhost = chainId === 31337;
 
     return (
         <AppBar position="sticky" elevation={0}>
@@ -127,8 +127,8 @@ const Navbar: React.FC = () => {
                     {/* Network Status */}
                     {isConnected && (
                         <Chip
-                            label={isSepolia ? 'Sepolia' : 'Wrong Network'}
-                            color={isSepolia ? 'success' : 'error'}
+                            label={isLocalhost ? 'Localhost' : 'Wrong Network'}
+                            color={isLocalhost ? 'success' : 'error'}
                             size="small"
                             variant="outlined"
                         />

@@ -419,6 +419,59 @@ class ContractService {
   async parseEther(etherAmount) {
     return ethers.parseEther(etherAmount.toString());
   }
+
+  // Get contract instances for direct access
+  getTimeSlotNFT() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.TimeSlotNFT;
+  }
+
+  getTimeSlotMarketplace() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.TimeSlotMarketplace;
+  }
+
+  getTimeSlotEscrow() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.TimeSlotEscrow;
+  }
+
+  getReviewSystem() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.ReviewSystem;
+  }
+
+  getUserRegistry() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.UserRegistry;
+  }
+
+  getTimeSlotFactory() {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    return this.contracts.TimeSlotFactory;
+  }
+
+  // Additional utility methods for time slots
+  async isTimeSlotAvailable(tokenId) {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    try {
+      const contract = this.contracts.TimeSlotNFT;
+      const timeSlot = await contract.getTimeSlot(tokenId);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return timeSlot.startTime > currentTime && timeSlot.isAvailable;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async getTimeSlotOwner(tokenId) {
+    if (!this.initialized) throw new Error('Contract service not initialized');
+    try {
+      return await this.contracts.TimeSlotNFT.ownerOf(tokenId);
+    } catch (error) {
+      return null;
+    }
+  }
 }
 
 module.exports = new ContractService();
