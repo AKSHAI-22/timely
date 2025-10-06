@@ -1,0 +1,63 @@
+type TimeSlot @entity(immutable: false) {
+  id: ID!
+  tokenId: BigInt!
+  expert: Bytes!
+  startTime: BigInt!
+  endTime: BigInt!
+  price: BigInt!
+  isBooked: Boolean!
+  bookedBy: Bytes
+  isRevoked: Boolean!
+  profession: String!
+  description: String!
+  createdAt: BigInt!
+  bookings: [Booking!]! @derivedFrom(field: "slot")
+}
+
+type ExpertProfile @entity(immutable: false) {
+  id: ID!
+  address: Bytes!
+  name: String!
+  profession: String!
+  description: String!
+  ens: String
+  totalSlots: BigInt!
+  totalBookings: BigInt!
+  rating: BigInt!
+  reviewCount: BigInt!
+  isActive: Boolean!
+}
+
+type Booking @entity(immutable: false) {
+  id: ID!
+  slot: TimeSlot!
+  expert: Bytes!
+  customer: Bytes!
+  price: BigInt!
+  status: String!
+  createdAt: BigInt!
+}
+
+type Escrow @entity(immutable: false) {
+  id: ID!
+  tokenId: BigInt!
+  buyer: Bytes!
+  seller: Bytes!
+  amount: BigInt!
+  startTime: BigInt!
+  endTime: BigInt!
+  status: String!
+  createdAt: BigInt!
+  disputeDeadline: BigInt!
+}
+
+type Review @entity(immutable: false) {
+  id: ID!
+  tokenId: BigInt!
+  reviewer: Bytes!
+  expert: Bytes!
+  rating: Int!
+  comment: String!
+  timestamp: BigInt!
+  isVerified: Boolean!
+}

@@ -1,0 +1,28 @@
+{
+  "name": "timely-project",
+  "version": "1.0.0",
+  "description": "Decentralized appointment booking platform on Ethereum",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy-all.js --network sepolia",
+    "deploy:local": "hardhat run scripts/deploy-all.js --network localhost",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "build": "npm run compile && cd frontend && npm run build",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../subgraph && npm install"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "concurrently": "^8.2.2",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.6",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.8.0",
+    "web3": "^4.3.0"
+  }
+}

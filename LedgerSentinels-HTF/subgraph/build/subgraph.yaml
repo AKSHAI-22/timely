@@ -1,0 +1,38 @@
+specVersion: 0.0.5
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum
+    name: TimeSlotNFT
+    network: sepolia
+    source:
+      address: "0x3453531C06C5A50d2383b5D207Fb1D229e973f89"
+      abi: TimeSlotNFT
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TimeSlot
+        - ExpertProfile
+        - Booking
+        - Escrow
+        - Review
+      abis:
+        - name: TimeSlotNFT
+          file: TimeSlotNFT/TimeSlotNFT.json
+      eventHandlers:
+        - event: SlotCreated(indexed uint256,indexed address,uint256,uint256,uint256,string)
+          handler: handleSlotCreated
+        - event: SlotBooked(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleSlotBooked
+        - event: SlotRevoked(indexed uint256,indexed address,indexed address)
+          handler: handleSlotRevoked
+        - event: SlotResold(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleSlotResold
+        - event: ExpertProfileUpdated(indexed address,string,string)
+          handler: handleExpertProfileUpdated
+        - event: SlotAutoRevoked(indexed uint256)
+          handler: handleSlotAutoRevoked
+      file: TimeSlotNFT/TimeSlotNFT.wasm
