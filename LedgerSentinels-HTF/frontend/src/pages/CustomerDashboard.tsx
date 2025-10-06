@@ -6,6 +6,7 @@ import {
     Grid,
     Card,
     CardContent,
+    CardActions,
     Button,
     Chip,
     useTheme,
@@ -16,96 +17,76 @@ import {
 } from '@mui/material';
 import {
     Schedule as ScheduleIcon,
+    Person as PersonIcon,
     AttachMoney as MoneyIcon,
+    Star as StarIcon,
     CheckCircle as CheckCircleIcon,
-    Cancel as CancelIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWallet } from '../contexts/WalletContext';
-import {
-    getContract,
-    CONTRACT_ADDRESSES,
-    TimeSlotNFT_ABI,
-    formatEther,
-    formatTime,
-    getSlotStatus,
-    getSlotStatusColor,
-    getSlotStatusText,
-} from '../utils/contracts';
+import { contractService } from '../services/contractService';
+import { formatEther, formatAddress, formatTime, getSlotStatus, getSlotStatusColor, getSlotStatusText } from '../utils/contracts';
 
-interface TimeSlot {
-    tokenId: bigint;
-    startTime: bigint;
-    endTime: bigint;
-    price: bigint;
-    profession: string;
-    description: string;
-    expert: string;
-    bookedBy: string;
-    isBooked: boolean;
-    isRevoked: boolean;
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+
+    return (
+        <div
+            role="tabpanel"
+            hidden={value !== index}
+            id={`customer-tabpanel-${index}`}
+            aria-labelledby={`customer-tab-${index}`}
+            {...other}
+        >
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    );
 }
 
 const CustomerDashboard: React.FC = () => {
     const theme = useTheme();
+    const navigate = useNavigate();
     const { user } = useAuth();
-    const { signer, isConnected } = useWallet();
+    const { provider } = useWallet();
 
-    const [slots, setSlots] = useState<TimeSlot[]>([]);
+    const [tabValue, setTabValue] = useState(0);
+    const [bookings, setBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState(0);
 
     useEffect(() => {
-        if (isConnected && signer) {
-            loadMyBookings();
+        if (provider && user) {
+            loadCustomerBookings();
         }
-    }, [isConnected, signer]);
+    }, [provider, user]);
 
-    const loadMyBookings = async () => {
+    const loadCustomerBookings = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            if (!signer) {
-                throw new Error('Signer not available');
+            if (!provider || !user) {
+                throw new Error('Provider or user not available');
             }
 
-            const contract = getContract(CONTRACT_ADDRESSES.TimeSlotNFT, TimeSlotNFT_ABI, signer);
-            const totalSupply = await contract.totalSupply();
+            contractService.setProvider(provider);
+            const allSlots = await contractService.getAllTimeSlots(50);
 
-            const slotsData: TimeSlot[] = [];
+            // Filter slots booked by this customer
+            const customerBookings = allSlots.filter(slot =>
+                slot.bookedBy.toLowerCase() === user.address.toLowerCase()
+            );
 
-            // Load first 50 slots and filter by current user
-            const maxSlots = Math.min(Number(totalSupply), 50);
-
-            for (let i = 0; i < maxSlots; i++) {
-                try {
-                    const tokenId = await contract.tokenByIndex(i);
-                    const slot = await contract.getTimeSlot(tokenId);
-
-                    if (slot.bookedBy.toLowerCase() === user?.address.toLowerCase()) {
-                        slotsData.push({
-                            tokenId,
-                            startTime: slot.startTime,
-                            endTime: slot.endTime,
-                            price: slot.price,
-                            profession: slot.profession,
-                            description: slot.description,
-                            expert: slot.expert,
-                            bookedBy: slot.bookedBy,
-                            isBooked: slot.isBooked,
-                            isRevoked: slot.isRevoked,
-                        });
-                    }
-                } catch (err) {
-                    console.warn(`Failed to load slot ${i}:`, err);
-                }
-            }
-
-            setSlots(slotsData);
+            setBookings(customerBookings);
         } catch (err) {
-            console.error('Failed to load bookings:', err);
+            console.error('Failed to load customer bookings:', err);
             setError('Failed to load your bookings. Please try again.');
         } finally {
             setLoading(false);
@@ -113,39 +94,27 @@ const CustomerDashboard: React.FC = () => {
     };
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setActiveTab(newValue);
+        setTabValue(newValue);
     };
 
-    const getFilteredSlots = () => {
-        switch (activeTab) {
-            case 0: // All
-                return slots;
-            case 1: // Upcoming
-                return slots.filter(slot => slot.isBooked && !slot.isRevoked && new Date(Number(slot.startTime) * 1000) > new Date());
-            case 2: // Completed
-                return slots.filter(slot => slot.isBooked && !slot.isRevoked && new Date(Number(slot.startTime) * 1000) <= new Date());
-            case 3: // Cancelled
-                return slots.filter(slot => slot.isRevoked);
-            default:
-                return slots;
-        }
-    };
+    const upcomingBookings = bookings.filter(booking => {
+        const now = Math.floor(Date.now() / 1000);
+        return booking.startTime > now && getSlotStatus(booking) === 'booked';
+    });
 
-    const stats = {
-        totalBookings: slots.length,
-        upcomingBookings: slots.filter(slot => slot.isBooked && !slot.isRevoked && new Date(Number(slot.startTime) * 1000) > new Date()).length,
-        completedBookings: slots.filter(slot => slot.isBooked && !slot.isRevoked && new Date(Number(slot.startTime) * 1000) <= new Date()).length,
-        totalSpent: slots
-            .filter(slot => slot.isBooked)
-            .reduce((sum, slot) => sum + Number(formatEther(slot.price)), 0),
-    };
+    const pastBookings = bookings.filter(booking => {
+        const now = Math.floor(Date.now() / 1000);
+        return booking.startTime <= now || getSlotStatus(booking) === 'revoked';
+    });
 
-    if (!isConnected) {
+    const totalSpent = bookings.reduce((total, booking) =>
+        total + Number(formatEther(booking.price)), 0
+    );
+
+    if (loading) {
         return (
-            <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Alert severity="info" sx={{ maxWidth: 400 }}>
-                    Please connect your wallet to access the customer dashboard.
-                </Alert>
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={60} />
             </Box>
         );
     }
@@ -160,68 +129,54 @@ const CustomerDashboard: React.FC = () => {
         >
             <Container maxWidth="lg">
                 {/* Header */}
-                <Box sx={{ mb: 4 }}>
+                <Box sx={{ textAlign: 'center', mb: 6 }}>
                     <Typography
-                        variant="h3"
+                        variant="h2"
                         sx={{
                             fontWeight: 700,
-                            mb: 1,
+                            mb: 3,
                             background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
                             backgroundClip: 'text',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                         }}
                     >
-                        My Bookings
+                        Customer Dashboard
                     </Typography>
-                    <Typography variant="h6" color="text.secondary">
-                        Manage your appointments and track your booking history
+                    <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+                        Manage your appointments and bookings
                     </Typography>
                 </Box>
 
-                {/* Stats */}
+                {/* Stats Cards */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={6} md={3}>
-                        <Card sx={{ p: 3, textAlign: 'center' }}>
-                            <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+                    <Grid item xs={12} sm={4}>
+                        <Card sx={{ textAlign: 'center', p: 3 }}>
+                            <ScheduleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                {stats.totalBookings}
+                                {upcomingBookings.length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Total Bookings
+                                Upcoming Appointments
                             </Typography>
                         </Card>
                     </Grid>
-
-                    <Grid item xs={6} md={3}>
-                        <Card sx={{ p: 3, textAlign: 'center' }}>
-                            <CheckCircleIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
+                    <Grid item xs={12} sm={4}>
+                        <Card sx={{ textAlign: 'center', p: 3 }}>
+                            <CheckCircleIcon sx={{ fontSize: 40, color: 'success.main', mb: 2 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
-                                {stats.upcomingBookings}
+                                {pastBookings.length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Upcoming
+                                Completed Appointments
                             </Typography>
                         </Card>
                     </Grid>
-
-                    <Grid item xs={6} md={3}>
-                        <Card sx={{ p: 3, textAlign: 'center' }}>
-                            <CheckCircleIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-                            <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
-                                {stats.completedBookings}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Completed
-                            </Typography>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={6} md={3}>
-                        <Card sx={{ p: 3, textAlign: 'center' }}>
-                            <MoneyIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
+                    <Grid item xs={12} sm={4}>
+                        <Card sx={{ textAlign: 'center', p: 3 }}>
+                            <MoneyIcon sx={{ fontSize: 40, color: 'warning.main', mb: 2 }} />
                             <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                                {stats.totalSpent.toFixed(2)}
+                                {totalSpent.toFixed(2)}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                                 Total Spent (ETH)
@@ -230,24 +185,21 @@ const CustomerDashboard: React.FC = () => {
                     </Grid>
                 </Grid>
 
-                {/* Tabs */}
-                <Card sx={{ mb: 4 }}>
-                    <Tabs
-                        value={activeTab}
-                        onChange={handleTabChange}
+                {/* Action Buttons */}
+                <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center' }}>
+                    <Button
+                        variant="contained"
+                        onClick={() => navigate('/marketplace')}
                         sx={{
-                            '& .MuiTab-root': {
-                                fontWeight: 600,
-                                textTransform: 'none',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
                             },
                         }}
                     >
-                        <Tab label="All Bookings" />
-                        <Tab label="Upcoming" />
-                        <Tab label="Completed" />
-                        <Tab label="Cancelled" />
-                    </Tabs>
-                </Card>
+                        Browse Experts
+                    </Button>
+                </Box>
 
                 {/* Error Alert */}
                 {error && (
@@ -256,124 +208,235 @@ const CustomerDashboard: React.FC = () => {
                     </Alert>
                 )}
 
-                {/* Loading State */}
-                {loading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                        <CircularProgress size={60} />
+                {/* Tabs */}
+                <Card>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <Tabs value={tabValue} onChange={handleTabChange} aria-label="customer dashboard tabs">
+                            <Tab label={`Upcoming (${upcomingBookings.length})`} />
+                            <Tab label={`Past (${pastBookings.length})`} />
+                            <Tab label={`All Bookings (${bookings.length})`} />
+                        </Tabs>
                     </Box>
-                )}
 
-                {/* Bookings */}
-                {!loading && (
-                    <Grid container spacing={3}>
-                        {getFilteredSlots().length === 0 ? (
-                            <Grid item xs={12}>
-                                <Card sx={{ p: 6, textAlign: 'center' }}>
-                                    <ScheduleIcon sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-                                    <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-                                        {activeTab === 0 ? 'No bookings yet' :
-                                            activeTab === 1 ? 'No upcoming bookings' :
-                                                activeTab === 2 ? 'No completed bookings' :
-                                                    'No cancelled bookings'}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {activeTab === 0 ? 'Start booking appointments with experts' :
-                                            activeTab === 1 ? 'Your upcoming appointments will appear here' :
-                                                activeTab === 2 ? 'Your completed appointments will appear here' :
-                                                    'Your cancelled appointments will appear here'}
-                                    </Typography>
-                                </Card>
-                            </Grid>
-                        ) : (
-                            getFilteredSlots().map((slot) => {
-                                const status = getSlotStatus(slot);
-                                const statusColor = getSlotStatusColor(status);
-                                const statusText = getSlotStatusText(status);
-                                const isUpcoming = new Date(Number(slot.startTime) * 1000) > new Date();
-                                const isCompleted = new Date(Number(slot.startTime) * 1000) <= new Date();
-
-                                return (
-                                    <Grid item xs={12} md={6} lg={4} key={slot.tokenId.toString()}>
-                                        <Card
+                    <TabPanel value={tabValue} index={0}>
+                        <Grid container spacing={3}>
+                            {upcomingBookings.length === 0 ? (
+                                <Grid item xs={12}>
+                                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                                        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+                                            No upcoming appointments.
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => navigate('/marketplace')}
                                             sx={{
-                                                height: '100%',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                borderTop: `4px solid ${status === 'available' ? theme.palette.success.main :
-                                                        status === 'booked' ? theme.palette.info.main :
-                                                            theme.palette.error.main
-                                                    }`,
+                                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                                },
                                             }}
                                         >
-                                            <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                                            Browse Experts
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            ) : (
+                                upcomingBookings.map((booking) => (
+                                    <Grid item xs={12} md={6} lg={4} key={booking.tokenId.toString()}>
+                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                            <CardContent sx={{ flexGrow: 1 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                                                     <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                                                        {slot.profession}
+                                                        {booking.profession}
                                                     </Typography>
                                                     <Chip
-                                                        label={statusText}
-                                                        color={statusColor as any}
+                                                        label="Upcoming"
+                                                        color="info"
                                                         size="small"
                                                         variant="outlined"
                                                     />
                                                 </Box>
 
-                                                <Box sx={{ mb: 2 }}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                        <strong>Time:</strong> {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                        <strong>Price:</strong> {formatEther(slot.price)} ETH
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        <strong>Expert:</strong> {slot.expert.slice(0, 6)}...{slot.expert.slice(-4)}
-                                                    </Typography>
-                                                </Box>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                                    {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                                </Typography>
+
+                                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
+                                                    {formatEther(booking.price)} ETH
+                                                </Typography>
+
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                    Expert: {formatAddress(booking.expert)}
+                                                </Typography>
 
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {slot.description || 'No description provided.'}
+                                                    {booking.description || 'No description provided.'}
                                                 </Typography>
                                             </CardContent>
 
-                                            <Box sx={{ p: 3, pt: 0 }}>
-                                                {slot.isBooked && !slot.isRevoked && (
-                                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                                        {isUpcoming && (
-                                                            <Button
-                                                                variant="outlined"
-                                                                color="primary"
-                                                                fullWidth
-                                                                sx={{ fontWeight: 600, borderRadius: 2 }}
-                                                            >
-                                                                View Details
-                                                            </Button>
-                                                        )}
-                                                        {isCompleted && (
-                                                            <Button
-                                                                variant="contained"
-                                                                color="success"
-                                                                fullWidth
-                                                                sx={{ fontWeight: 600, borderRadius: 2 }}
-                                                            >
-                                                                Leave Review
-                                                            </Button>
-                                                        )}
-                                                    </Box>
-                                                )}
-                                            </Box>
+                                            <CardActions sx={{ p: 2, pt: 0 }}>
+                                                <Button
+                                                    variant="contained"
+                                                    fullWidth
+                                                    onClick={() => navigate(`/booking/${booking.tokenId.toString()}`)}
+                                                >
+                                                    View Details
+                                                </Button>
+                                            </CardActions>
                                         </Card>
                                     </Grid>
-                                );
-                            })
-                        )}
-                    </Grid>
-                )}
+                                ))
+                            )}
+                        </Grid>
+                    </TabPanel>
+
+                    <TabPanel value={tabValue} index={1}>
+                        <Grid container spacing={3}>
+                            {pastBookings.length === 0 ? (
+                                <Grid item xs={12}>
+                                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                                        <Typography variant="h6" color="text.secondary">
+                                            No past appointments yet.
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            ) : (
+                                pastBookings.map((booking) => {
+                                    const status = getSlotStatus(booking);
+                                    const statusColor = getSlotStatusColor(status);
+                                    const statusText = getSlotStatusText(status);
+
+                                    return (
+                                        <Grid item xs={12} md={6} lg={4} key={booking.tokenId.toString()}>
+                                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                                <CardContent sx={{ flexGrow: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                                                            {booking.profession}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={statusText}
+                                                            color={statusColor as any}
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    </Box>
+
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                                        {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                                    </Typography>
+
+                                                    <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
+                                                        {formatEther(booking.price)} ETH
+                                                    </Typography>
+
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                        Expert: {formatAddress(booking.expert)}
+                                                    </Typography>
+
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {booking.description || 'No description provided.'}
+                                                    </Typography>
+                                                </CardContent>
+
+                                                <CardActions sx={{ p: 2, pt: 0 }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        onClick={() => navigate(`/booking/${booking.tokenId.toString()}`)}
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                </CardActions>
+                                            </Card>
+                                        </Grid>
+                                    );
+                                })
+                            )}
+                        </Grid>
+                    </TabPanel>
+
+                    <TabPanel value={tabValue} index={2}>
+                        <Grid container spacing={3}>
+                            {bookings.length === 0 ? (
+                                <Grid item xs={12}>
+                                    <Box sx={{ textAlign: 'center', py: 8 }}>
+                                        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+                                            No bookings yet.
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            onClick={() => navigate('/marketplace')}
+                                            sx={{
+                                                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                                '&:hover': {
+                                                    background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                                                },
+                                            }}
+                                        >
+                                            Browse Experts
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            ) : (
+                                bookings.map((booking) => {
+                                    const status = getSlotStatus(booking);
+                                    const statusColor = getSlotStatusColor(status);
+                                    const statusText = getSlotStatusText(status);
+
+                                    return (
+                                        <Grid item xs={12} md={6} lg={4} key={booking.tokenId.toString()}>
+                                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                                <CardContent sx={{ flexGrow: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                                        <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                                                            {booking.profession}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={statusText}
+                                                            color={statusColor as any}
+                                                            size="small"
+                                                            variant="outlined"
+                                                        />
+                                                    </Box>
+
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                                        {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                                    </Typography>
+
+                                                    <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main', mb: 2 }}>
+                                                        {formatEther(booking.price)} ETH
+                                                    </Typography>
+
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                        Expert: {formatAddress(booking.expert)}
+                                                    </Typography>
+
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {booking.description || 'No description provided.'}
+                                                    </Typography>
+                                                </CardContent>
+
+                                                <CardActions sx={{ p: 2, pt: 0 }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        onClick={() => navigate(`/booking/${booking.tokenId.toString()}`)}
+                                                    >
+                                                        View Details
+                                                    </Button>
+                                                </CardActions>
+                                            </Card>
+                                        </Grid>
+                                    );
+                                })
+                            )}
+                        </Grid>
+                    </TabPanel>
+                </Card>
             </Container>
         </Box>
     );
 };
 
 export default CustomerDashboard;
-
-
-

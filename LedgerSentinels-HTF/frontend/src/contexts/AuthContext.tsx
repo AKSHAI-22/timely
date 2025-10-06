@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useWallet } from './WalletContext';
+import { apiService } from '../services/api';
 
 interface User {
     id: string;
@@ -12,6 +13,7 @@ interface User {
     isActive: boolean;
     profileImage?: string;
     bio?: string;
+    profession?: string;
 }
 
 interface AuthContextType {
@@ -48,26 +50,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            // In a real app, this would make an API call to authenticate
-            // For now, we'll simulate with wallet connection
             if (!isConnected) {
                 throw new Error('Please connect your wallet first');
             }
 
-            // Mock user data - in real app, fetch from API
-            const mockUser: User = {
-                id: account!,
-                address: account!,
-                name: 'User',
+            const response = await apiService.login({
                 email,
-                userType: 'customer',
-                isExpert: false,
-                isVerified: false,
-                isActive: true,
-            };
+                password,
+                walletAddress: account!,
+            });
 
-            setUser(mockUser);
-            localStorage.setItem('user', JSON.stringify(mockUser));
+            setUser(response.user);
+            localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
             console.error('Login failed:', error);
             throw error;
@@ -83,21 +77,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 throw new Error('Please connect your wallet first');
             }
 
-            const newUser: User = {
-                id: account!,
-                address: account!,
+            const response = await apiService.register({
                 name: userData.name || 'User',
                 email: userData.email || '',
+                password: 'defaultPassword123', // In a real app, this would be generated or provided
                 userType: userData.userType || 'customer',
-                isExpert: userData.isExpert || false,
-                isVerified: false,
-                isActive: true,
-                profileImage: userData.profileImage,
+                walletAddress: account!,
+                profession: userData.profession,
                 bio: userData.bio,
-            };
+            });
 
-            setUser(newUser);
-            localStorage.setItem('user', JSON.stringify(newUser));
+            setUser(response.user);
+            localStorage.setItem('user', JSON.stringify(response.user));
         } catch (error) {
             console.error('Signup failed:', error);
             throw error;
@@ -106,9 +97,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('user');
+    const logout = async () => {
+        try {
+            await apiService.logout();
+        } catch (error) {
+            console.warn('Logout API call failed:', error);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('user');
+            apiService.clearToken();
+        }
     };
 
     const updateProfile = async (userData: Partial<User>) => {
@@ -116,7 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         setIsLoading(true);
         try {
-            const updatedUser = { ...user, ...userData };
+            const updatedUser = await apiService.updateProfile(userData);
             setUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
         } catch (error) {

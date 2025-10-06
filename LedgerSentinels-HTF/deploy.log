@@ -1,0 +1,56 @@
+[dotenv@17.2.3] injecting env (2) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+Starting deployment of LedgerSentinels contracts...
+Deploying contracts with account: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+Account balance: 10000.0 ETH
+
+1. Deploying TimeSlotNFT...
+TimeSlotNFT deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+
+2. Deploying TimeSlotMarketplace...
+TimeSlotMarketplace deployed to: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+
+3. Deploying TimeSlotEscrow...
+TimeSlotEscrow deployed to: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+
+4. Deploying ReviewSystem...
+ReviewSystem deployed to: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+
+5. Deploying UserRegistry...
+UserRegistry deployed to: 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+
+6. Deploying TimeSlotFactory...
+TimeSlotFactory deployed to: 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+
+7. Initializing TimeSlotFactory...
+TimeSlotFactory initialized successfully
+
+8. Verifying deployed contracts...
+System addresses from factory:
+- TimeSlotNFT: 0x61c36a8d610163660E21a8b7359e1Cac0C9133e1
+- Marketplace: 0x23dB4a08f2272df049a4932a4Cc3A6Dc1002B33E
+- Escrow: 0x8EFa1819Ff5B279077368d44B593a4543280e402
+- ReviewSystem: 0x6743E5c6E1B453372507E8dfD6CA53508721425B
+- UserRegistry: 0xA14d9C7a916Db01cCA55ec21Be1F7665C326928F
+
+9. Contract addresses saved to: /home/akshai/Desktop/thefinal/timely/LedgerSentinels-HTF/contract-addresses.json
+Deployment summary saved to: /home/akshai/Desktop/thefinal/timely/LedgerSentinels-HTF/deployment-summary.json
+
+✅ All contracts deployed successfully!
+
+📋 Deployment Summary:
+- TimeSlotNFT: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+- TimeSlotMarketplace: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+- TimeSlotEscrow: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+- ReviewSystem: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+- UserRegistry: 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+- TimeSlotFactory: 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+- Platform Wallet: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+- Network: localhost
+- Chain ID: 31337
+
+🔧 Next Steps:
+1. Update your frontend with the new contract addresses
+2. Update your backend environment variables
+3. Test the contracts with sample data
+4. Deploy to mainnet when ready

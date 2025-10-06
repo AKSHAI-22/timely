@@ -37,7 +37,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     const connectWallet = async () => {
         try {
             if (!window.ethereum) {
-                throw new Error('MetaMask is not installed');
+                throw new Error('MetaMask is not installed. Please install MetaMask to continue.');
             }
 
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -52,6 +52,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 setSigner(signer);
                 setChainId(Number(network.chainId));
 
+                // Check if we're on the correct network
+                if (Number(network.chainId) !== 31337) {
+                    console.warn('Please switch to localhost network (Chain ID: 31337)');
+                }
+
                 // Listen for account changes
                 window.ethereum.on('accountsChanged', (accounts: string[]) => {
                     if (accounts.length > 0) {
@@ -64,12 +69,27 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 // Listen for chain changes
                 window.ethereum.on('chainChanged', (chainId: string) => {
                     setChainId(Number(chainId));
-                    window.location.reload();
+                    if (Number(chainId) !== 31337) {
+                        console.warn('Please switch to localhost network (Chain ID: 31337)');
+                    }
                 });
             }
-        } catch (error) {
-            console.error('Failed to connect wallet:', error);
-            throw error;
+        } catch (error: any) {
+            console.log('Wallet connection error:', error);
+
+            // Handle user rejection specifically - don't show error for user rejection
+            if (error.code === 4001 || error.code === 'ACTION_REJECTED' ||
+                (error.error && error.error.code === 4001) ||
+                (error.message && error.message.includes('User rejected')) ||
+                (error.message && error.message.includes('rejected'))) {
+                // User declined wallet connection - don't throw error, just return silently
+                console.log('User declined wallet connection');
+                return;
+            } else if (error.code === -32002) {
+                throw new Error('Connection request already pending. Please check MetaMask.');
+            } else {
+                throw new Error(error.message || 'Failed to connect wallet');
+            }
         }
     };
 
@@ -86,14 +106,14 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
                 throw new Error('MetaMask is not installed');
             }
 
-            await window.ethereum.request({
+            await window.ethereum!.request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: '0x7a69' }], // Localhost chain ID (31337 in hex)
             });
         } catch (error: any) {
             if (error.code === 4902) {
                 // Chain not added, add it
-                await window.ethereum.request({
+                await window.ethereum!.request({
                     method: 'wallet_addEthereumChain',
                     params: [
                         {
@@ -120,7 +140,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         if (window.ethereum) {
             window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
                 if (accounts.length > 0) {
-                    connectWallet();
+                    connectWallet().catch((error) => {
+                        // Silently handle connection errors during auto-connect
+                        console.log('Auto-connect failed:', error.message);
+                    });
                 }
             });
         }

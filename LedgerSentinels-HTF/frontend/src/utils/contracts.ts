@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-// Contract addresses for localhost (Hardhat)
+// Contract addresses for localhost (Hardhat) - Updated from contract-addresses.json
 export const CONTRACT_ADDRESSES = {
     TimeSlotNFT: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
     TimeSlotMarketplace: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',

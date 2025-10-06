@@ -5,6 +5,7 @@ import { CssBaseline, Box } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import { WalletProvider } from './contexts/WalletContext';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -147,10 +148,31 @@ function App() {
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/signup" element={<Signup />} />
                                     <Route path="/marketplace" element={<Marketplace />} />
-                                    <Route path="/expert-dashboard" element={<ExpertDashboard />} />
-                                    <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+                                    <Route
+                                        path="/expert-dashboard"
+                                        element={
+                                            <ProtectedRoute requireAuth requireExpert>
+                                                <ExpertDashboard />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/customer-dashboard"
+                                        element={
+                                            <ProtectedRoute requireAuth requireCustomer>
+                                                <CustomerDashboard />
+                                            </ProtectedRoute>
+                                        }
+                                    />
                                     <Route path="/expert/:address" element={<ExpertProfile />} />
-                                    <Route path="/booking/:tokenId" element={<BookingPage />} />
+                                    <Route
+                                        path="/booking/:tokenId"
+                                        element={
+                                            <ProtectedRoute requireAuth>
+                                                <BookingPage />
+                                            </ProtectedRoute>
+                                        }
+                                    />
                                 </Routes>
                             </Box>
                         </Box>

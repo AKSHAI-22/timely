@@ -29,14 +29,38 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/timely');
+// MongoDB connection with timeout settings
+const mongoOptions = {
+  serverSelectionTimeoutMS: 30000, // 30 seconds
+  socketTimeoutMS: 45000, // 45 seconds
+  connectTimeoutMS: 30000, // 30 seconds
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  minPoolSize: 5, // Maintain a minimum of 5 socket connections
+  maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+  bufferCommands: false, // Disable mongoose buffering
+};
+
+// Connect to MongoDB asynchronously
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/timely', mongoOptions);
+    console.log('✅ Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    // Don't exit the process, just log the error
+  }
+};
 
 const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
-  console.log('Connected to MongoDB');
+db.on('error', (error) => {
+  console.error('MongoDB connection error:', error);
 });
+db.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+// Start the database connection
+connectDB();
 
 // Apollo Server
 const server = new ApolloServer({

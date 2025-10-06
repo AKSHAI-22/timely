@@ -42,8 +42,8 @@ const Navbar: React.FC = () => {
         setAnchorEl(null);
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         handleMenuClose();
         navigate('/');
     };
@@ -138,7 +138,16 @@ const Navbar: React.FC = () => {
                     {!isConnected ? (
                         <Button
                             variant="contained"
-                            onClick={connectWallet}
+                            onClick={async () => {
+                                try {
+                                    await connectWallet();
+                                } catch (error: any) {
+                                    // Only show error if it's not a user rejection
+                                    if (!error.message?.includes('rejected') && !error.message?.includes('declined')) {
+                                        console.error('Wallet connection error:', error);
+                                    }
+                                }
+                            }}
                             startIcon={<WalletIcon />}
                             sx={{
                                 background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',

@@ -28,9 +28,6 @@ import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../contexts/WalletContext';
 import { useAuth } from '../contexts/AuthContext';
 import {
-    getContract,
-    CONTRACT_ADDRESSES,
-    TimeSlotNFT_ABI,
     formatEther,
     formatAddress,
     formatTime,
@@ -38,6 +35,7 @@ import {
     getSlotStatusColor,
     getSlotStatusText,
 } from '../utils/contracts';
+import { contractService } from '../services/contractService';
 
 interface TimeSlot {
     tokenId: bigint;
@@ -92,35 +90,8 @@ const Marketplace: React.FC = () => {
                 throw new Error('Provider not available');
             }
 
-            const contract = getContract(CONTRACT_ADDRESSES.TimeSlotNFT, TimeSlotNFT_ABI, provider);
-            const totalSupply = await contract.totalSupply();
-
-            const slotsData: TimeSlot[] = [];
-
-            // Load first 20 slots for demo
-            const maxSlots = Math.min(Number(totalSupply), 20);
-
-            for (let i = 0; i < maxSlots; i++) {
-                try {
-                    const tokenId = await contract.tokenByIndex(i);
-                    const slot = await contract.getTimeSlot(tokenId);
-                    slotsData.push({
-                        tokenId,
-                        startTime: slot.startTime,
-                        endTime: slot.endTime,
-                        price: slot.price,
-                        profession: slot.profession,
-                        description: slot.description,
-                        expert: slot.expert,
-                        bookedBy: slot.bookedBy,
-                        isBooked: slot.isBooked,
-                        isRevoked: slot.isRevoked,
-                    });
-                } catch (err) {
-                    console.warn(`Failed to load slot ${i}:`, err);
-                }
-            }
-
+            contractService.setProvider(provider);
+            const slotsData = await contractService.getAllTimeSlots(20);
             setSlots(slotsData);
         } catch (err) {
             console.error('Failed to load time slots:', err);
@@ -142,8 +113,8 @@ const Marketplace: React.FC = () => {
         }
 
         try {
-            const contract = getContract(CONTRACT_ADDRESSES.TimeSlotNFT, TimeSlotNFT_ABI, signer);
-            const tx = await contract.bookSlot(tokenId, { value: price });
+            contractService.setSigner(signer);
+            const tx = await contractService.bookSlot(tokenId, price);
             await tx.wait();
 
             // Reload slots
@@ -322,8 +293,8 @@ const Marketplace: React.FC = () => {
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 borderTop: `4px solid ${status === 'available' ? theme.palette.success.main :
-                                                        status === 'booked' ? theme.palette.info.main :
-                                                            theme.palette.error.main
+                                                    status === 'booked' ? theme.palette.info.main :
+                                                        theme.palette.error.main
                                                     }`,
                                                 '&:hover': {
                                                     transform: 'translateY(-4px)',

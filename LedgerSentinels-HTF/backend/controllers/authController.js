@@ -110,9 +110,34 @@ const register = async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
+    
+    // Handle specific MongoDB timeout errors
+    if (error.message && error.message.includes('buffering timed out')) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection timeout. Please try again in a moment.'
+      });
+    }
+    
+    // Handle MongoDB connection errors
+    if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database temporarily unavailable. Please try again.'
+      });
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input data. Please check your information.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: error.message || 'Registration failed'
+      message: error.message || 'Registration failed. Please try again.'
     });
   }
 };
@@ -198,9 +223,26 @@ const login = async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Handle specific MongoDB timeout errors
+    if (error.message && error.message.includes('buffering timed out')) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection timeout. Please try again in a moment.'
+      });
+    }
+    
+    // Handle MongoDB connection errors
+    if (error.name === 'MongoNetworkError' || error.name === 'MongoTimeoutError') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database temporarily unavailable. Please try again.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: error.message || 'Login failed'
+      message: error.message || 'Login failed. Please try again.'
     });
   }
 };
